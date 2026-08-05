@@ -26,6 +26,37 @@ A symlink is the simplest approach and needs no tooling. If you later want a man
 (`stow claude` from the repo root) is the lightweight fit; **chezmoi** is heavier, worth it only for
 per-machine templating or secret handling.
 
+## Do not move this repo without re-pointing the links
+
+**The links above are absolute paths, so moving or renaming this checkout breaks them — silently.**
+A dangling symlink reads as a *missing file*, and a missing global `CLAUDE.md` is not an error: every
+Claude session on this machine would simply run without these standing preferences, and nothing would
+say so. That is the whole hazard — it does not announce itself, and you would notice only by
+wondering why the assistant stopped following rules you thought were loaded.
+
+Near-miss on 2026-08-04: this repo was a candidate for being moved into a managed workspace, which
+would have done exactly that. It stayed put — see below — but if you ever do move it:
+
+```sh
+ln -sfn <new-path>/claude/CLAUDE.md ~/.claude/CLAUDE.md   # -f replaces, -n avoids nesting into a dir
+readlink ~/.claude/CLAUDE.md                              # must print the NEW path
+test -e ~/.claude/CLAUDE.md && echo OK || echo DANGLING    # -e follows the link: catches a dead target
+```
+
+The last check is the one that matters. `readlink` prints a path whether or not anything is there;
+only `test -e` proves the target actually exists.
+
+## This repo belongs to no workspace, on purpose
+
+It is **config, not a project**. Its subject is *this machine* — it is consumed by every session in
+every repo and is a member of none of them. That puts it in the same class as the second-brain vault:
+an end product that tooling references, rather than a repo a workspace tracks. So it is deliberately
+absent from every `repos.yml`, and that absence is a decision, not an oversight.
+
+The cost, stated so it is not a surprise: **nothing watches this repo.** It appears in no status
+sweep and no rollup, so uncommitted changes here are invisible until you look. `git status` in this
+directory is the only check there is.
+
 ## Guidelines — what belongs here, and what must NOT
 
 These are hard-won; don't relearn them.
