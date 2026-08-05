@@ -12,19 +12,42 @@ the live location is a symlink to it, so the two never drift.**
 
 ## Setup on a new machine
 
-Clone, then symlink each tracked file to its live location. For the Claude global config:
+Clone anywhere, then **run this from the repo root** — it links the Claude global config to
+wherever *this* checkout actually is:
 
 ```sh
-ln -s ~/src/github.com/cornjacket/dotfiles/claude/CLAUDE.md ~/.claude/CLAUDE.md
+ln -sfn "$PWD/claude/CLAUDE.md" ~/.claude/CLAUDE.md
+test -e ~/.claude/CLAUDE.md && readlink ~/.claude/CLAUDE.md || echo DANGLING
 ```
 
-**Gotcha:** `ln -s` fails with *"File exists"* if the live path is already a real file. Back it up
-and remove it first (`mv ~/.claude/CLAUDE.md /tmp/`), *then* symlink. Verify with
-`readlink ~/.claude/CLAUDE.md` — it should print the repo path.
+**Why `$PWD` and not a hardcoded path.** This README used to spell out
+`~/src/github.com/cornjacket/dotfiles/...`, which is wrong the moment you clone somewhere else —
+i.e. exactly the situation "setup on a new machine" describes. Deriving the path from where you are
+standing cannot go stale.
+
+**`-f` replaces, `-n` avoids nesting.** Together they make the command idempotent and remove the old
+*"File exists"* gotcha: `-f` overwrites an existing link, and `-n` stops `ln` from burrowing a link
+*inside* `~/.claude/CLAUDE.md` if that path is already a symlink to a directory. If the live path is
+a **real file** you still want it backed up first (`cp ~/.claude/CLAUDE.md /tmp/`) — `-f` would
+delete it without asking.
+
+**Verify with `test -e`, not `readlink` alone.** `readlink` prints its target whether or not
+anything is there, so it will happily confirm a link that points at nothing.
 
 A symlink is the simplest approach and needs no tooling. If you later want a manager: **GNU Stow**
 (`stow claude` from the repo root) is the lightweight fit; **chezmoi** is heavier, worth it only for
 per-machine templating or secret handling.
+
+**Why there is no `install.sh` here.** One tracked file and one link do not earn a script, and this
+repo already argues against bespoke tooling — the moment a second or third file makes the manual
+step tedious, the answer above is Stow, not a hand-rolled installer nobody maintains. Revisit when
+the table at the top has three rows.
+
+**The instruction cannot live in the file it installs.** Worth stating plainly, because it is the
+trap: `claude/CLAUDE.md` *is* the global agent instruction file. If the link is broken or was never
+made, that file is not loaded — so any "how to set up the link" guidance written inside it is
+invisible in precisely the situation where it is needed. It has to live here, in the repo's README,
+where a human or an agent reading the repo will find it regardless.
 
 ## Do not move this repo without re-pointing the links
 
