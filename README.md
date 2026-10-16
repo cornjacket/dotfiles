@@ -9,6 +9,7 @@ the live location is a symlink to it, so the two never drift.**
 | Path | Symlinked to | Purpose |
 | --- | --- | --- |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | **Global** Claude Code instructions — standing preferences applied in *every* repo, every session (e.g. "lead with a one-line summary", the second-brain consult rule). |
+| `claude/skills/writing-docs/` | `~/.claude/skills/writing-docs` | User-level skill for writing human-facing docs in plain technical English (word list, templates, final check). Extends the always-on style rules in `claude/CLAUDE.md`; does not repeat them. |
 
 ## Setup on a new machine
 
@@ -18,6 +19,8 @@ wherever *this* checkout actually is:
 ```sh
 ln -sfn "$PWD/claude/CLAUDE.md" ~/.claude/CLAUDE.md
 test -e ~/.claude/CLAUDE.md && readlink ~/.claude/CLAUDE.md || echo DANGLING
+ln -sfn "$PWD/claude/skills/writing-docs" ~/.claude/skills/writing-docs
+test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
 ```
 
 **Why `$PWD` and not a hardcoded path.** This README used to spell out
@@ -64,7 +67,12 @@ would have done exactly that. It stayed put — see below — but if you ever do
 ln -sfn <new-path>/claude/CLAUDE.md ~/.claude/CLAUDE.md   # -f replaces, -n avoids nesting into a dir
 readlink ~/.claude/CLAUDE.md                              # must print the NEW path
 test -e ~/.claude/CLAUDE.md && echo OK || echo DANGLING    # -e follows the link: catches a dead target
+ln -sfn <new-path>/claude/skills/writing-docs ~/.claude/skills/writing-docs
+test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
 ```
+
+Every row in the table at the top is one link to re-point. A link you forget fails the same silent
+way: the skill simply stops loading.
 
 The last check is the one that matters. `readlink` prints a path whether or not anything is there;
 only `test -e` proves the target actually exists.

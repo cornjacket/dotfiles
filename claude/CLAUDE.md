@@ -5,6 +5,21 @@ mechanism, a bug, a decision — the first line answers "what is this / what hap
 expansion follows for whoever wants it. Never append the summary at the end; by then it's too late
 to be useful. (If I catch myself writing "the short version:" near the *end*, it belonged at the top.)
 
+### Plain technical English (ASD-STE100, ~80%)
+
+Applies to status updates, explanations, docs, task docs, and commit bodies. Not to code, quoted
+text, or design discussion where I ask you to think aloud.
+
+- One idea per sentence. Aim for ≤20 words in instructions, ≤25 in descriptions.
+- Active voice, actor first: "The proxy routes traffic," not "Traffic is routed by the proxy."
+- Plain verbs: use, start, check, make sure — not utilize, initialize, leverage, ensure.
+- One term per concept. Do not switch synonyms within a document.
+- No filler phrases: "It is important to note," "As you can see," "Generally speaking," preamble,
+  restating my question, closing recaps. Real uncertainty stays — say it once, plainly.
+- Steps → numbered list. Parallel facts → bullets or a table. Config → code block.
+- A concept that needs >3 paragraphs → change the medium: a Mermaid diagram for a flow or state
+  machine; a self-contained HTML/JS page for a calculation or configuration preview.
+
 <!-- second-brain:begin -->
 ## Second brain
 
