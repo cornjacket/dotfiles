@@ -10,6 +10,7 @@ the live location is a symlink to it, so the two never drift.**
 | --- | --- | --- |
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | **Global** Claude Code instructions — standing preferences applied in *every* repo, every session (e.g. "lead with a one-line summary", the second-brain consult rule). |
 | `claude/skills/writing-docs/` | `~/.claude/skills/writing-docs` | User-level skill for writing human-facing docs in plain technical English (word list, templates, final check). Extends the always-on style rules in `claude/CLAUDE.md`; does not repeat them. |
+| `claude/prompts/` | — (not linked; open or paste) | Reusable task prompts for setting up a repo. See [New repo checklist](#new-repo-checklist). |
 
 ## Setup on a new machine
 
@@ -51,6 +52,18 @@ trap: `claude/CLAUDE.md` *is* the global agent instruction file. If the link is 
 made, that file is not loaded — so any "how to set up the link" guidance written inside it is
 invisible in precisely the situation where it is needed. It has to live here, in the repo's README,
 where a human or an agent reading the repo will find it regardless.
+
+## New repo checklist
+
+Run these when you start a new repo. Each line links to the tool or prompt that does the work.
+
+1. Add the task system (`create-project-system`).
+2. Add context hygiene (`create-context-hygiene`).
+3. Add invariants: run [claude/prompts/working-in-this-repo.md](claude/prompts/working-in-this-repo.md).
+4. Register the repo in its workspace (`make add-repo` from the workspace root).
+
+When a prompt here has stayed the same across two or three repos, promote it: make it a skill, or
+have a generator emit it. A generator does not forget.
 
 ## Do not move this repo without re-pointing the links
 
