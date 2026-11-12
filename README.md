@@ -6,28 +6,39 @@ the live location is a symlink to it, so the two never drift.**
 
 ## What's here
 
+`claude/` and `zsh/` are [GNU Stow](https://www.gnu.org/software/stow/) packages. Inside each
+package, a file sits at the same path it has under `~`. Stow links it there.
+
 | Path | Symlinked to | Purpose |
 | --- | --- | --- |
-| `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | **Global** Claude Code instructions — standing preferences applied in *every* repo, every session (e.g. "lead with a one-line summary", the second-brain consult rule). |
-| `claude/skills/writing-docs/` | `~/.claude/skills/writing-docs` | User-level skill for writing human-facing docs in plain technical English (word list, templates, final check). Extends the always-on style rules in `claude/CLAUDE.md`; does not repeat them. |
-| `claude/prompts/` | — (not linked; open or paste) | Reusable task prompts for setting up a repo. See [New repo checklist](#new-repo-checklist). |
-| `shell/claude.zsh` | `~/.config/zsh/claude.zsh` | Claude Code shell config: the `claude-yolo` alias, `claude-workspaces` (list git-workspaces), and `claude-leader` (start a named, auto-mode session at a workspace root, with tab completion). `~/.zshrc` sources it. |
+| `claude/.claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | **Global** Claude Code instructions — standing preferences applied in *every* repo, every session (e.g. "lead with a one-line summary", the second-brain consult rule). |
+| `claude/.claude/skills/writing-docs/` | `~/.claude/skills/writing-docs` | User-level skill for writing human-facing docs in plain technical English (word list, templates, final check). Extends the always-on style rules in the global `CLAUDE.md`; does not repeat them. |
+| `zsh/.config/zsh/claude.zsh` | `~/.config/zsh/claude.zsh` | Claude Code shell config: the `claude-yolo` alias, `claude-workspaces` (list git-workspaces), and `claude-leader` (start a named, auto-mode session at a workspace root, with tab completion). `~/.zshrc` sources it. |
+| `prompts/` | — (not linked; open or paste) | Reusable task prompts for setting up a repo. See [New repo checklist](#new-repo-checklist). |
 | `PLAN.md`, `tasks/` | — (repo only) | Work tracking for this repo. `PLAN.md` is the index and says how tasks work; each task is a directory under `tasks/open/` or `tasks/done/`. |
+
+To add a linked file, put it in a package at its `~`-relative path, then run `stow` again.
+Keep anything that must not be linked outside the packages, like `prompts/`.
 
 ## Setup on a new machine
 
-Clone anywhere, then **run this from the repo root** — it links the Claude global config to
-wherever *this* checkout actually is:
+Clone anywhere, then **run this from the repo root**:
 
 ```sh
-ln -sfn "$PWD/claude/CLAUDE.md" ~/.claude/CLAUDE.md
-test -e ~/.claude/CLAUDE.md && readlink ~/.claude/CLAUDE.md || echo DANGLING
-ln -sfn "$PWD/claude/skills/writing-docs" ~/.claude/skills/writing-docs
-test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
-mkdir -p ~/.config/zsh
-ln -sfn "$PWD/shell/claude.zsh" ~/.config/zsh/claude.zsh
-test -e ~/.config/zsh/claude.zsh && echo OK || echo DANGLING
+brew install stow
+stow -t ~ claude zsh
+for p in ~/.claude/CLAUDE.md ~/.claude/skills/writing-docs/SKILL.md ~/.config/zsh/claude.zsh; do
+  test -e "$p" && echo "OK $p" || echo "MISSING $p"
+done
 ```
+
+**`-t ~` is required.** Stow's default target is the parent of the repo, not your home folder.
+
+**Stow refuses to overwrite a real file.** If `~/.claude/CLAUDE.md` already exists as a file, Stow
+stops with a conflict. Back the file up, remove it, and run `stow` again.
+
+**Verify with `test -e`, not `readlink` alone.** `readlink` prints its target whether or not
+anything is there, so it will happily confirm a link that points at nothing.
 
 **`~/.zshrc` is a manual step.** It is not tracked here, so on a new machine add these lines to it
 yourself. `compinit` must run before the source line, or `claude-leader` tab completion does not
@@ -47,32 +58,15 @@ starts in auto mode:
 
 Claude Code writes to this file itself, so a symlink would put its runtime edits into this repo.
 
-**Why `$PWD` and not a hardcoded path.** This README used to spell out
-`~/src/github.com/cornjacket/dotfiles/...`, which is wrong the moment you clone somewhere else —
-i.e. exactly the situation "setup on a new machine" describes. Deriving the path from where you are
-standing cannot go stale.
-
-**`-f` replaces, `-n` avoids nesting.** Together they make the command idempotent and remove the old
-*"File exists"* gotcha: `-f` overwrites an existing link, and `-n` stops `ln` from burrowing a link
-*inside* `~/.claude/CLAUDE.md` if that path is already a symlink to a directory. If the live path is
-a **real file** you still want it backed up first (`cp ~/.claude/CLAUDE.md /tmp/`) — `-f` would
-delete it without asking.
-
-**Verify with `test -e`, not `readlink` alone.** `readlink` prints its target whether or not
-anything is there, so it will happily confirm a link that points at nothing.
-
-A symlink is the simplest approach and needs no tooling. If you later want a manager: **GNU Stow**
-(`stow claude` from the repo root) is the lightweight fit; **chezmoi** is heavier, worth it only for
-per-machine templating or secret handling.
-
-**Why there is no `install.sh` here.** One tracked file and one link do not earn a script, and this
-repo already argues against bespoke tooling — the moment a second or third file makes the manual
-step tedious, the answer above is Stow, not a hand-rolled installer nobody maintains. Revisit when
-the table at the top has three rows.
+**Why Stow and not an `install.sh`.** Until 2026-11 this repo used one hand-written `ln -sfn` per
+file, and said to revisit at three links. At three links, each link's commands were listed twice in
+this README, and every new link meant editing both lists. Stow removes the lists: the folder layout
+is the link list. A hand-rolled installer would be one more thing to maintain. **chezmoi** is the
+heavier option, worth it only for per-machine templating or secret handling.
 
 **The instruction cannot live in the file it installs.** Worth stating plainly, because it is the
-trap: `claude/CLAUDE.md` *is* the global agent instruction file. If the link is broken or was never
-made, that file is not loaded — so any "how to set up the link" guidance written inside it is
+trap: `claude/.claude/CLAUDE.md` *is* the global agent instruction file. If the link is broken or was
+never made, that file is not loaded — so any "how to set up the link" guidance written inside it is
 invisible in precisely the situation where it is needed. It has to live here, in the repo's README,
 where a human or an agent reading the repo will find it regardless.
 
@@ -82,7 +76,7 @@ Run these when you start a new repo. Each line links to the tool or prompt that 
 
 1. Add the task system (`create-project-system`).
 2. Add context hygiene (`create-context-hygiene`).
-3. Add invariants: run [claude/prompts/working-in-this-repo.md](claude/prompts/working-in-this-repo.md).
+3. Add invariants: run [prompts/working-in-this-repo.md](prompts/working-in-this-repo.md).
 4. Register the repo in its workspace (`make add-repo` from the workspace root).
 
 When a prompt here has stayed the same across two or three repos, promote it: make it a skill, or
@@ -90,7 +84,7 @@ have a generator emit it. A generator does not forget.
 
 ## Do not move this repo without re-pointing the links
 
-**The links above are absolute paths, so moving or renaming this checkout breaks them — silently.**
+**The links point into this checkout, so moving or renaming it breaks them — silently.**
 A dangling symlink reads as a *missing file*, and a missing global `CLAUDE.md` is not an error: every
 Claude session on this machine would simply run without these standing preferences, and nothing would
 say so. That is the whole hazard — it does not announce itself, and you would notice only by
@@ -99,21 +93,27 @@ wondering why the assistant stopped following rules you thought were loaded.
 Near-miss on 2026-08-04: this repo was a candidate for being moved into a managed workspace, which
 would have done exactly that. It stayed put — see below — but if you ever do move it:
 
+1. **Before the move,** from the old location, remove the links: `stow -D -t ~ claude zsh`.
+2. Move the repo.
+3. From the new location, make the links again and check them:
+
+   ```sh
+   stow -t ~ claude zsh
+   for p in ~/.claude/CLAUDE.md ~/.claude/skills/writing-docs/SKILL.md ~/.config/zsh/claude.zsh; do
+     test -e "$p" && echo "OK $p" || echo "MISSING $p"
+   done
+   ```
+
+**Already moved without step 1?** `stow -R` does not fix it. Stow does not own the old, dangling
+links, so it stops with *"existing target is not owned by stow"*. Delete the dead links that point
+into this repo, then do step 3:
+
 ```sh
-ln -sfn <new-path>/claude/CLAUDE.md ~/.claude/CLAUDE.md   # -f replaces, -n avoids nesting into a dir
-readlink ~/.claude/CLAUDE.md                              # must print the NEW path
-test -e ~/.claude/CLAUDE.md && echo OK || echo DANGLING    # -e follows the link: catches a dead target
-ln -sfn <new-path>/claude/skills/writing-docs ~/.claude/skills/writing-docs
-test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
-ln -sfn <new-path>/shell/claude.zsh ~/.config/zsh/claude.zsh
-test -e ~/.config/zsh/claude.zsh && echo OK || echo DANGLING
+find ~/.claude ~/.config/zsh -maxdepth 2 -type l -lname '*dotfiles/*' ! -exec test -e {} \; -print -delete
 ```
 
-Every row in the table at the top with a "Symlinked to" path is one link to re-point. A link you forget fails the same silent
-way: the skill simply stops loading.
-
-The last check is the one that matters. `readlink` prints a path whether or not anything is there;
-only `test -e` proves the target actually exists.
+The `test -e` loop is the check that matters. `readlink` prints a path whether or not anything is
+there; only `test -e` proves the target actually exists.
 
 ## This repo belongs to no workspace, on purpose
 
