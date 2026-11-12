@@ -11,6 +11,8 @@ the live location is a symlink to it, so the two never drift.**
 | `claude/CLAUDE.md` | `~/.claude/CLAUDE.md` | **Global** Claude Code instructions — standing preferences applied in *every* repo, every session (e.g. "lead with a one-line summary", the second-brain consult rule). |
 | `claude/skills/writing-docs/` | `~/.claude/skills/writing-docs` | User-level skill for writing human-facing docs in plain technical English (word list, templates, final check). Extends the always-on style rules in `claude/CLAUDE.md`; does not repeat them. |
 | `claude/prompts/` | — (not linked; open or paste) | Reusable task prompts for setting up a repo. See [New repo checklist](#new-repo-checklist). |
+| `shell/claude.zsh` | `~/.config/zsh/claude.zsh` | Claude Code shell config: the `claude-yolo` alias, `claude-workspaces` (list git-workspaces), and `claude-leader` (start a named, auto-mode session at a workspace root, with tab completion). `~/.zshrc` sources it. |
+| `PLAN.md`, `tasks/` | — (repo only) | Work tracking for this repo. `PLAN.md` is the index and says how tasks work; each task is a directory under `tasks/open/` or `tasks/done/`. |
 
 ## Setup on a new machine
 
@@ -22,7 +24,28 @@ ln -sfn "$PWD/claude/CLAUDE.md" ~/.claude/CLAUDE.md
 test -e ~/.claude/CLAUDE.md && readlink ~/.claude/CLAUDE.md || echo DANGLING
 ln -sfn "$PWD/claude/skills/writing-docs" ~/.claude/skills/writing-docs
 test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
+mkdir -p ~/.config/zsh
+ln -sfn "$PWD/shell/claude.zsh" ~/.config/zsh/claude.zsh
+test -e ~/.config/zsh/claude.zsh && echo OK || echo DANGLING
 ```
+
+**`~/.zshrc` is a manual step.** It is not tracked here, so on a new machine add these lines to it
+yourself. `compinit` must run before the source line, or `claude-leader` tab completion does not
+register:
+
+```sh
+autoload -Uz compinit && compinit
+[ -f ~/.config/zsh/claude.zsh ] && source ~/.config/zsh/claude.zsh
+```
+
+**`~/.claude/settings.json` is a manual step too.** Add this so every new Claude Code session
+starts in auto mode:
+
+```json
+"permissions": { "defaultMode": "auto" }
+```
+
+Claude Code writes to this file itself, so a symlink would put its runtime edits into this repo.
 
 **Why `$PWD` and not a hardcoded path.** This README used to spell out
 `~/src/github.com/cornjacket/dotfiles/...`, which is wrong the moment you clone somewhere else —
@@ -82,9 +105,11 @@ readlink ~/.claude/CLAUDE.md                              # must print the NEW p
 test -e ~/.claude/CLAUDE.md && echo OK || echo DANGLING    # -e follows the link: catches a dead target
 ln -sfn <new-path>/claude/skills/writing-docs ~/.claude/skills/writing-docs
 test -e ~/.claude/skills/writing-docs/SKILL.md && echo OK || echo DANGLING
+ln -sfn <new-path>/shell/claude.zsh ~/.config/zsh/claude.zsh
+test -e ~/.config/zsh/claude.zsh && echo OK || echo DANGLING
 ```
 
-Every row in the table at the top is one link to re-point. A link you forget fails the same silent
+Every row in the table at the top with a "Symlinked to" path is one link to re-point. A link you forget fails the same silent
 way: the skill simply stops loading.
 
 The last check is the one that matters. `readlink` prints a path whether or not anything is there;
